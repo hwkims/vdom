@@ -57,7 +57,7 @@
       }
 
       function createTextVNode(text) {
-        return { type: '#text', props: { nodeValue: text } };
+        return { type: '#text', props: { nodeValue: text } }; // 텍스트 노드를 위한 특별한 type
       }
       // --- Component ---
       function isFunctionComponent(vnode) {
@@ -73,11 +73,12 @@
 
       // --- Mount (Create DOM) ---
       function mount(vnode) {
-        if (typeof vnode.type === 'string') {
+        if (vnode.type === '#text') {
+            return mountText(vnode);
+        }
+        else if (typeof vnode.type === 'string') {
           return mountElement(vnode);
-        } else if (typeof vnode === 'string' || typeof vnode === 'number') { // 텍스트 노드 처리
-          return mountText(vnode);
-        } else if (isFunctionComponent(vnode)) { //함수형 컴포넌트
+        }  else if (isFunctionComponent(vnode)) { //함수형 컴포넌트
           return mountComponent(vnode);
         }
       }
@@ -108,8 +109,9 @@
       }
 
       function mountText(vnode) {
-        const textNode = document.createTextNode(vnode);
-          return textNode;
+        const textNode = document.createTextNode(vnode.props.nodeValue);
+        vnode.el = textNode; // 텍스트 노드도 참조를 저장합니다.
+        return textNode;
       }
 
       function mountComponent(vnode) {
@@ -130,11 +132,11 @@
               return;
           }
 
-          if (typeof newVNode.type === 'string') { //element
+          if (newVNode.type === '#text') {
+                patchText(newVNode, oldVNode);
+            }
+          else if (typeof newVNode.type === 'string') { //element
               patchElement(newVNode, oldVNode, parentEl);
-          }
-          else if(typeof newVNode === 'string' || typeof newVNode === 'number'){ //text
-              patchText(newVNode, oldVNode, parentEl);
           }
           else if(isFunctionComponent(newVNode)){ //function component
               patchComponent(newVNode, oldVNode)
@@ -153,12 +155,12 @@
           patchChildren(el, newChildren, oldChildren);
       }
 
-      function patchText(newVNode, oldVNode, parentEl) {
-          if (newVNode !== oldVNode) {
-              parentEl.replaceChild(mountText(newVNode), parentEl.childNodes[0]); // 텍스트 노드는 하나만 존재
-          }
-      }
-
+        function patchText(newVNode, oldVNode) {
+            const textNode = newVNode.el = oldVNode.el;
+            if (newVNode.props.nodeValue !== oldVNode.props.nodeValue) {
+                textNode.nodeValue = newVNode.props.nodeValue;
+            }
+        }
 
       function patchComponent(newVNode, oldVNode){
           const {type, props} = newVNode;
