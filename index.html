@@ -115,14 +115,15 @@
       }
 
       function mountComponent(vnode) {
-          const { type, props } = vnode;
-          const renderedVNode = type(props);  // type은 함수형 컴포넌트
-          const dom = mount(renderedVNode);
-          vnode.component = { // 함수형 컴포넌트의 인스턴스
-              vnode: renderedVNode, // 함수형 컴포넌트가 return 한 vnode
-          };
-          return dom;
-      }
+            const { type, props } = vnode;
+            const renderedVNode = type(props);
+            const dom = mount(renderedVNode);
+            vnode.component = {
+                vnode: renderedVNode,
+            };
+            renderedVNode.el = dom; // 수정된 부분!
+            return dom;
+        }
 
       // --- Diff & Patch ---
       function update(newVNode, oldVNode, parentEl) {
@@ -271,9 +272,9 @@
           }
 
           //key 가 있었지만, update 되지 않고, oldKeyed 에 남아있는 oldChild 를 제거
-          for (const key in oldKeyed) {
-            parentEl.removeChild(oldKeyed[key].dom);
-          }
+            for (const key in oldKeyed) {
+                oldKeyed[key].dom.parentNode.removeChild(oldKeyed[key].dom); // 수정된 부분
+            }
       }
 
         // --- Application Logic and Initial Render ---
